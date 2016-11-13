@@ -348,7 +348,8 @@ RumFastFormTuple(RumState * rumstate,
 	Datum		datums[3];
 	bool		isnull[3];
 	IndexTuple	itup;
-	Size		newsize;
+	Size		newsize,
+				maxItemSize;
 
 	/* Build the basic tuple: optional column number, plus key datum */
 
@@ -390,14 +391,15 @@ RumFastFormTuple(RumState * rumstate,
 
 	newsize = MAXALIGN(newsize);
 
-	if (newsize > Min(INDEX_SIZE_MASK, RumMaxItemSize))
+	/* For posting tree we need less space for index */
+	maxItemSize = (nipd == 0) ? RumTreeMaxItemSize : RumMaxItemSize;
+	if (newsize > maxItemSize)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
 				   (unsigned long) newsize,
-				   (unsigned long) Min(INDEX_SIZE_MASK,
-									   RumMaxItemSize),
+				   (unsigned long) maxItemSize,
 				   RelationGetRelationName(rumstate->index))));
 		pfree(itup);
 		return NULL;

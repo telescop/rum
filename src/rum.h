@@ -234,9 +234,16 @@ typedef signed char RumNullCategory;
 #define RumGetPosting(itup)			((Pointer) ((char*)(itup) + RumGetPostingOffset(itup)))
 
 #define RumMaxItemSize \
-	MAXALIGN_DOWN(((BLCKSZ - SizeOfPageHeaderData - \
-		MAXALIGN(sizeof(RumPageOpaqueData))) / 6 - \
-		sizeof(RumKey) /* right bound */))
+	Min(INDEX_SIZE_MASK, \
+		MAXALIGN_DOWN(((BLCKSZ - SizeOfPageHeaderData - \
+			MAXALIGN(sizeof(RumPageOpaqueData))) / 6 - \
+			sizeof(RumKey) /* right bound */)))
+
+#define RumTreeMaxItemSize \
+	Min(INDEX_SIZE_MASK, \
+		MAXALIGN_DOWN(((BLCKSZ - SizeOfPageHeaderData - \
+			MAXALIGN(sizeof(RumPageOpaqueData))) / 6 - \
+			sizeof(ItemIdData) /* right bound */)))
 
 /*
  * Access macros for non-leaf entry tuples
